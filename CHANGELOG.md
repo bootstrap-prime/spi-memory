@@ -5,6 +5,11 @@
 * Implement `Display` for `Error`
 * Make BlockDevice depend on embedded_hal's Write<u8> and make write_bytes buffer reference non-mutable
 
+## 0.2.1 - 2020-12-27
+
+* Add `deepsleep` function
+
+
 ## 0.2.0 - 2020-03-25
 
 * Add `BlockDevice` and `Read` traits, and allow writing to devices ([#5])
