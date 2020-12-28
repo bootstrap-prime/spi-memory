@@ -5,7 +5,6 @@ authors = ["Jonas Schievink <jonasschievink@gmail.com>", "Henrik Böving <hargon
 edition = "2018"
 description = "A generic driver for different SPI Flash and EEPROM chips"
 documentation = "https://docs.rs/spi-memory/"
-repository = "https://github.com/jonas-schievink/spi-memory.git"
 keywords = ["embedded-hal-driver", "serial", "flash", "eeprom", "spi"]
 categories = ["embedded"]
 readme = "README.md"
