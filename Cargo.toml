@@ -2,7 +2,7 @@
 name = "spi-memory"
 version = "0.2.1"
 authors = ["Jonas Schievink <jonasschievink@gmail.com>", "Henrik Böving <hargonix@gmail.com>"]
-edition = "2020"
+edition = "2018"
 description = "A generic driver for different SPI Flash and EEPROM chips"
 documentation = "https://docs.rs/spi-memory/"
 keywords = ["embedded-hal-driver", "serial", "flash", "eeprom", "spi"]
