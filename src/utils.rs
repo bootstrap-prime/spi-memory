@@ -1,5 +1,6 @@
 use core::fmt;
 
+#[derive(defmt::Format)]
 pub struct HexSlice<T>(pub T)
 where
     T: AsRef<[u8]>;

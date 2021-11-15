@@ -12,10 +12,8 @@
 #![no_std]
 #![no_main]
 
-extern crate panic_semihosting;
+use panic_probe as _;
 
-use cortex_m_rt::entry;
-use cortex_m_semihosting::hprintln;
 use embedded_hal::digital::v2::OutputPin;
 use embedded_hal::serial::Write;
 use embedded_hal::spi::MODE_0;
@@ -47,7 +45,7 @@ fn print<'a, E>(buf: &[u8], w: &'a mut (dyn Write<u8, Error = E> + 'static)) {
     writeln!(w).unwrap();
 }
 
-#[entry]
+#[cortex_m_rt::entry]
 fn main() -> ! {
     let periph = pac::Peripherals::take().unwrap();
     let clocks = periph.RCC.constrain().cfgr.freeze();
@@ -85,7 +83,7 @@ fn main() -> ! {
 
     let mut flash = Flash::init(spi, cs).unwrap();
     let id = flash.read_jedec_id().unwrap();
-    hprintln!("{:?}", id).ok();
+    defmt::info!("{:?}", id);
 
     let mut addr = 0;
     const BUF: usize = 32;
@@ -98,7 +96,7 @@ fn main() -> ! {
         addr += BUF as u32;
     }
 
-    hprintln!("DONE").ok();
+    defmt::info!("DONE");
 
     loop {}
 }

@@ -62,6 +62,16 @@ impl Identification {
     }
 }
 
+impl defmt::Format for Identification {
+    fn format(&self, f: defmt::Formatter<'_>) {
+        defmt::write!(
+            f,
+            "Identification {}",
+            &HexSlice(self.bytes)
+        )
+    }
+}
+
 impl fmt::Debug for Identification {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_tuple("Identification")
@@ -96,6 +106,7 @@ enum Opcode {
 
 bitflags! {
     /// Status register bits.
+    #[derive(defmt::Format)]
     pub struct Status: u8 {
         /// Erase or write in progress.
         const BUSY = 1 << 0;
@@ -115,7 +126,7 @@ bitflags! {
 /// * **`SPI`**: The SPI master to which the flash chip is attached.
 /// * **`CS`**: The **C**hip-**S**elect line attached to the `\CS`/`\CE` pin of
 ///   the flash chip.
-#[derive(Debug)]
+#[derive(Debug, defmt::Format)]
 pub struct Flash<SPI, CS: OutputPin> {
     spi: SPI,
     cs: CS,
