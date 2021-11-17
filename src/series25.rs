@@ -328,36 +328,36 @@ where
 // with info from https://docs.rs-online.com/53b3/0900766b8162304e.pdf
 #[cfg(feature = "littlefs-driver")]
 impl<E, SPI: Transfer<u8, Error = E> + Write<u8, Error = E>, CS: OutputPin> littlefs2::driver::Storage for Flash<SPI, CS> {
-    type CACHE_SIZE = littlefs2::consts::U4096;
-    type LOOKAHEADWORDS_SIZE = littlefs2::consts::U64;
+    type CACHE_SIZE = littlefs2::consts::U256;
+    type LOOKAHEADWORDS_SIZE = littlefs2::consts::U1;
 
-    const READ_SIZE: usize = 256;
+    const READ_SIZE: usize = 16;
     const WRITE_SIZE: usize = 256;
     const BLOCK_SIZE: usize = 256;
     const BLOCK_COUNT: usize = 32_768;
     const BLOCK_CYCLES: isize = 1000;
 
-    fn read(&self, off: usize, buf: &mut [u8]) -> littlefs2::io::Result<usize> {
+    fn read(&mut self, offset: usize, buf: &mut [u8]) -> littlefs2::io::Result<usize> {
         let read_size: usize = Self::READ_SIZE;
-        debug_assert!(off % read_size == 0);
+        debug_assert!(offset % read_size == 0);
         debug_assert!(buf.len() % read_size == 0);
-        self.read(off, buf)?;
+        Read::read(&mut *self, offset.try_into().unwrap(), buf)?;
         Ok(buf.len())
     }
 
-    fn write(&mut self, off: usize, data: &[u8]) -> littlefs2::io::Result<usize> {
+    fn write(&mut self, offset: usize, data: &[u8]) -> littlefs2::io::Result<usize> {
         let write_size: usize = Self::WRITE_SIZE;
-        debug_assert!(off % write_size == 0);
+        debug_assert!(offset % write_size == 0);
         debug_assert!(data.len() % write_size == 0);
-        self.write_bytes(off as u32, data)?;
+        self.write_bytes(offset.try_into().unwrap(), data)?;
         Ok(data.len())
     }
 
-    fn erase(&mut self, off: usize, len: usize) -> littlefs2::io::Result<usize> {
+    fn erase(&mut self, offset: usize, len: usize) -> littlefs2::io::Result<usize> {
         let block_size: usize = Self::BLOCK_SIZE;
-        debug_assert!(off % block_size == 0);
+        debug_assert!(offset % block_size == 0);
         debug_assert!(len % block_size == 0);
-        self.erase_sectors(off as u32, len)?;
+        self.erase_sectors(offset.try_into().unwrap(), len)?;
         Ok(len)
     }
 }
