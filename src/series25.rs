@@ -327,25 +327,31 @@ where
 // copy https://docs.rs/littlefs2/0.3.2/src/littlefs2/macros.rs.html#6-136
 // with info from https://docs.rs-online.com/53b3/0900766b8162304e.pdf
 #[cfg(feature = "littlefs-driver")]
-impl<E, SPI: Transfer<u8, Error = E> + Write<u8, Error = E>, CS: OutputPin> littlefs2::driver::Storage for Flash<SPI, CS> {
-    type CACHE_SIZE = littlefs2::consts::U256;
-    type LOOKAHEADWORDS_SIZE = littlefs2::consts::U1;
+impl<E, SPI, CS> littlefs2::driver::Storage for Flash<SPI, CS>
+where
+    SPI: Transfer<u8, Error = E> + Write<u8, Error = E>,
+    CS: OutputPin
+{
 
     const READ_SIZE: usize = 16;
-    const WRITE_SIZE: usize = 256;
-    const BLOCK_SIZE: usize = 256;
-    const BLOCK_COUNT: usize = 32_768;
-    const BLOCK_CYCLES: isize = 1000;
+    const WRITE_SIZE: usize = 16;
+    type CACHE_SIZE = littlefs2::consts::U16;
+    const BLOCK_SIZE: usize = 4096;
+    const BLOCK_COUNT: usize = 1776;
+    //const BLOCK_CYCLES: isize = 500;
+    type LOOKAHEADWORDS_SIZE = littlefs2::consts::U2;
 
     fn read(&mut self, offset: usize, buf: &mut [u8]) -> littlefs2::io::Result<usize> {
+        defmt::trace!("read!");
         let read_size: usize = Self::READ_SIZE;
         debug_assert!(offset % read_size == 0);
         debug_assert!(buf.len() % read_size == 0);
-        Read::read(&mut *self, offset.try_into().unwrap(), buf)?;
+        Read::read(self, offset.try_into().unwrap(), buf)?;
         Ok(buf.len())
     }
 
     fn write(&mut self, offset: usize, data: &[u8]) -> littlefs2::io::Result<usize> {
+        defmt::trace!("wrote!");
         let write_size: usize = Self::WRITE_SIZE;
         debug_assert!(offset % write_size == 0);
         debug_assert!(data.len() % write_size == 0);
@@ -354,6 +360,7 @@ impl<E, SPI: Transfer<u8, Error = E> + Write<u8, Error = E>, CS: OutputPin> litt
     }
 
     fn erase(&mut self, offset: usize, len: usize) -> littlefs2::io::Result<usize> {
+        defmt::trace!("erased!");
         let block_size: usize = Self::BLOCK_SIZE;
         debug_assert!(offset % block_size == 0);
         debug_assert!(len % block_size == 0);
@@ -375,5 +382,43 @@ mod tests {
         let device_id = ident.device_id();
         assert_eq!(device_id[0], 0x22);
         assert_eq!(device_id[1], 0x08);
+    }
+
+    #[test]
+    fn working_littlefs_numbers() {
+        // you need to set RUST_MIN_STACK to a really big number to get this
+        // test to pass.
+        // RUST_MIN_STACK=8704000000 worked last time.
+        use littlefs2::{fs::Filesystem, driver, io::{Error, Result}, consts};
+        use littlefs2::ram_storage;
+
+        println!("do I fail here?");
+
+        ram_storage!(
+            name=RamStorageForTestingMyThing,
+            backend=YetAnotherRam,
+            trait=driver::Storage,
+            erase_value=0xff,
+            read_size=16,
+            write_size=16,
+            cache_size_ty=consts::U16,
+            block_size=4096,
+            block_count=1776,
+            lookaheadwords_size_ty=consts::U2,
+            filename_max_plus_one_ty=consts::U256, // this doesn't do anything
+            path_max_plus_one_ty=consts::U256, // this doesn't do anything
+            result=Result,
+        );
+
+        let mut ram = YetAnotherRam::default();
+        println!("do I fail here");
+        let mut storage = RamStorageForTestingMyThing::new(&mut ram);
+        println!("do I fail here?");
+
+        let mut alloc = Filesystem::allocate();
+        Filesystem::format(&mut storage).unwrap();
+        // must allocate state statically before use
+        let mut fs = Filesystem::mount(&mut alloc, &mut storage).unwrap();
+
     }
 }
