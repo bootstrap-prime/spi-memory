@@ -357,32 +357,32 @@ where
     type CACHE_SIZE = littlefs2::consts::U16;
     const BLOCK_SIZE: usize = 4096;
     const BLOCK_COUNT: usize = 1776;
-    type LOOKAHEADWORDS_SIZE = littlefs2::consts::U2;
+    const BLOCK_CYCLES: isize = 500;
+    // this turns into a lookahead of 32
+    // more than this gives buffer overflows
+    type LOOKAHEADWORDS_SIZE = littlefs2::consts::U1;
 
     fn read(&mut self, offset: usize, buf: &mut [u8]) -> littlefs2::io::Result<usize> {
-        // defmt::trace!("read!");
         let read_size: usize = Self::READ_SIZE;
         debug_assert!(offset % read_size == 0);
         debug_assert!(buf.len() % read_size == 0);
-        self.backend.read(offset as u32, buf).ok();
+        self.backend.read(offset as u32, buf)?;
         Ok(buf.len())
     }
 
     fn write(&mut self, offset: usize, data: &[u8]) -> littlefs2::io::Result<usize> {
-        // defmt::trace!("wrote!");
         let write_size: usize = Self::WRITE_SIZE;
         debug_assert!(offset % write_size == 0);
         debug_assert!(data.len() % write_size == 0);
-        self.backend.write_bytes(offset as u32, data).ok();
+        self.backend.write_bytes(offset as u32, data)?;
         Ok(data.len())
     }
 
     fn erase(&mut self, offset: usize, len: usize) -> littlefs2::io::Result<usize> {
-        // defmt::trace!("erased!");
         let block_size: usize = Self::BLOCK_SIZE;
         debug_assert!(offset % block_size == 0);
         debug_assert!(len % block_size == 0);
-        self.backend.erase_sectors(offset as u32, len).ok();
+        self.backend.erase_sectors(offset as u32, len)?;
         Ok(len)
     }
 }
@@ -423,7 +423,7 @@ mod tests {
             cache_size_ty=consts::U16,
             block_size=4096,
             block_count=1776,
-            lookaheadwords_size_ty=consts::U2,
+            lookaheadwords_size_ty=consts::U1,
             filename_max_plus_one_ty=consts::U256, // this doesn't do anything
             path_max_plus_one_ty=consts::U256, // this doesn't do anything
             result=Result,
