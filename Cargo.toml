@@ -39,7 +39,7 @@ replace = "https://docs.rs/spi-memory/{{version}}"
 embedded-hal = "0.2.3"
 defmt = "0.3.0"
 bitflags = "1.0.4"
-littlefs2 = { version = "0.3.2", optional = true }
+littlefs2 = { version = "0.3.2", features = ["ll-assertions", "c-stubs"], optional = true }
 
 [dev-dependencies]
 defmt = "0.3.0"

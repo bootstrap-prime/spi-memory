@@ -314,6 +314,28 @@ impl<E, SPI: Transfer<u8, Error = E> + Write<u8, Error = E>, CS: OutputPin>
 }
 
 #[cfg(feature = "littlefs-driver")]
+pub struct SpiFlashFs<E, SPI, CS>
+where
+    SPI: Transfer<u8, Error = E> + Write<u8, Error = E>,
+    CS: OutputPin
+{
+    backend: Flash<SPI, CS>,
+}
+
+#[cfg(feature = "littlefs-driver")]
+impl<E, SPI, CS> SpiFlashFs<E, SPI, CS>
+where
+    SPI: Transfer<u8, Error = E> + Write<u8, Error = E>,
+    CS: OutputPin
+{
+    pub fn new(storage: Flash<SPI, CS>) -> SpiFlashFs<E, SPI, CS> {
+        SpiFlashFs {
+            backend: storage
+        }
+    }
+}
+
+#[cfg(feature = "littlefs-driver")]
 impl<E, CS> From<Error<E, CS>> for littlefs2::io::Error
 where
     CS: OutputPin
@@ -324,50 +346,47 @@ where
     }
 }
 
-// copy https://docs.rs/littlefs2/0.3.2/src/littlefs2/macros.rs.html#6-136
-// with info from https://docs.rs-online.com/53b3/0900766b8162304e.pdf
 #[cfg(feature = "littlefs-driver")]
-impl<E, SPI, CS> littlefs2::driver::Storage for Flash<SPI, CS>
+impl<E, SPI, CS> littlefs2::driver::Storage for SpiFlashFs<E, SPI, CS>
 where
     SPI: Transfer<u8, Error = E> + Write<u8, Error = E>,
     CS: OutputPin
 {
-
     const READ_SIZE: usize = 16;
     const WRITE_SIZE: usize = 16;
     type CACHE_SIZE = littlefs2::consts::U16;
     const BLOCK_SIZE: usize = 4096;
     const BLOCK_COUNT: usize = 1776;
-    //const BLOCK_CYCLES: isize = 500;
     type LOOKAHEADWORDS_SIZE = littlefs2::consts::U2;
 
     fn read(&mut self, offset: usize, buf: &mut [u8]) -> littlefs2::io::Result<usize> {
-        defmt::trace!("read!");
+        // defmt::trace!("read!");
         let read_size: usize = Self::READ_SIZE;
         debug_assert!(offset % read_size == 0);
         debug_assert!(buf.len() % read_size == 0);
-        Read::read(self, offset.try_into().unwrap(), buf)?;
+        self.backend.read(offset as u32, buf).ok();
         Ok(buf.len())
     }
 
     fn write(&mut self, offset: usize, data: &[u8]) -> littlefs2::io::Result<usize> {
-        defmt::trace!("wrote!");
+        // defmt::trace!("wrote!");
         let write_size: usize = Self::WRITE_SIZE;
         debug_assert!(offset % write_size == 0);
         debug_assert!(data.len() % write_size == 0);
-        self.write_bytes(offset.try_into().unwrap(), data)?;
+        self.backend.write_bytes(offset as u32, data).ok();
         Ok(data.len())
     }
 
     fn erase(&mut self, offset: usize, len: usize) -> littlefs2::io::Result<usize> {
-        defmt::trace!("erased!");
+        // defmt::trace!("erased!");
         let block_size: usize = Self::BLOCK_SIZE;
         debug_assert!(offset % block_size == 0);
         debug_assert!(len % block_size == 0);
-        self.erase_sectors(offset.try_into().unwrap(), len)?;
+        self.backend.erase_sectors(offset as u32, len).ok();
         Ok(len)
     }
 }
+
 
 #[cfg(test)]
 mod tests {
