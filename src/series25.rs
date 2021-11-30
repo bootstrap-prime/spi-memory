@@ -102,6 +102,8 @@ enum Opcode {
     BlockErase = 0xD8,
     DeepPowerDown = 0xB9,
     ChipErase = 0xC7,
+    EnableReset = 0x66,
+    Reset = 0x99,
 }
 
 bitflags! {
@@ -153,6 +155,15 @@ impl<SPI: Transfer<u8>, CS: OutputPin> Flash<SPI, CS> {
         }
 
         Ok(this)
+    }
+
+    pub fn reset(&mut self) -> Result<(), Error<SPI::Error, CS>> {
+        let mut buf: [u8; 2] = [
+            Opcode::EnableReset as u8,
+            Opcode::Reset as u8
+        ];
+        self.command(&mut buf)?;
+        Ok(())
     }
 
     fn command(&mut self, bytes: &mut [u8]) -> Result<(), Error<SPI::Error, CS>> {
@@ -211,8 +222,14 @@ impl<SPI: Transfer<u8>, CS: OutputPin> Flash<SPI, CS> {
         Ok(())
     }
 
-    fn write_enable(&mut self) -> Result<(), Error<SPI::Error, CS>> {
+    pub fn write_enable(&mut self) -> Result<(), Error<SPI::Error, CS>> {
         let mut cmd_buf = [Opcode::WriteEnable as u8];
+        self.command(&mut cmd_buf)?;
+        Ok(())
+    }
+
+    pub fn write_disable(&mut self) -> Result<(), Error<SPI::Error, CS>> {
+        let mut cmd_buf = [Opcode::WriteDisable as u8];
         self.command(&mut cmd_buf)?;
         Ok(())
     }
