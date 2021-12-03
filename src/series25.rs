@@ -355,6 +355,10 @@ where
             backend: storage
         }
     }
+
+    pub fn decompose(self) -> SpiFlashFs<E, SPI, CS> {
+        self.backend
+    }
 }
 
 #[cfg(feature = "littlefs-driver")]
