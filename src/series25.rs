@@ -146,7 +146,6 @@ impl<SPI: Transfer<u8>, CS: OutputPin> Flash<SPI, CS> {
     pub fn init(spi: SPI, cs: CS) -> Result<Self, Error<SPI::Error, CS>> {
         let mut this = Self { spi, cs };
         let status = this.read_status()?;
-        info!("Flash::init: status = {:?}", status);
 
         // Here we don't expect any writes to be in progress, and the latch must
         // also be deasserted.
@@ -155,6 +154,11 @@ impl<SPI: Transfer<u8>, CS: OutputPin> Flash<SPI, CS> {
         }
 
         Ok(this)
+    }
+
+    /// Returns ownership of component elements of flash driver.
+    pub fn decompose(self) -> (SPI, CS) {
+        (self.spi, self.cs)
     }
 
     pub fn reset(&mut self) -> Result<(), Error<SPI::Error, CS>> {
@@ -331,6 +335,7 @@ impl<E, SPI: Transfer<u8, Error = E> + Write<u8, Error = E>, CS: OutputPin>
 }
 
 #[cfg(feature = "littlefs-driver")]
+#[derive(Debug)]
 pub struct SpiFlashFs<E, SPI, CS>
 where
     SPI: Transfer<u8, Error = E> + Write<u8, Error = E>,
@@ -399,7 +404,7 @@ where
         let block_size: usize = Self::BLOCK_SIZE;
         assert!(offset % block_size == 0);
         assert!(len % block_size == 0);
-        self.backend.erase_sectors(offset as u32, (len/block_size))?;
+        self.backend.erase_sectors(offset as u32, len/block_size)?;
         Ok(len)
     }
 }
