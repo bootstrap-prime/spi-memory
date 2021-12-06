@@ -356,7 +356,7 @@ where
         }
     }
 
-    pub fn decompose(self) -> SpiFlashFs<E, SPI, CS> {
+    pub fn decompose(self) -> Flash<SPI, CS> {
         self.backend
     }
 }
