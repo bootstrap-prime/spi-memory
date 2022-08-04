@@ -64,11 +64,7 @@ impl Identification {
 
 impl defmt::Format for Identification {
     fn format(&self, f: defmt::Formatter<'_>) {
-        defmt::write!(
-            f,
-            "Identification {}",
-            &HexSlice(self.bytes)
-        )
+        defmt::write!(f, "Identification {}", &HexSlice(self.bytes))
     }
 }
 
@@ -158,10 +154,7 @@ impl<SPI: Transfer<u8>, CS: OutputPin> Flash<SPI, CS> {
     }
 
     pub fn reset(&mut self) -> Result<(), Error<SPI::Error, CS>> {
-        let mut buf: [u8; 2] = [
-            Opcode::EnableReset as u8,
-            Opcode::Reset as u8
-        ];
+        let mut buf: [u8; 2] = [Opcode::EnableReset as u8, Opcode::Reset as u8];
         self.command(&mut buf)?;
         Ok(())
     }
@@ -334,7 +327,7 @@ impl<E, SPI: Transfer<u8, Error = E> + Write<u8, Error = E>, CS: OutputPin>
 pub struct SpiFlashFs<E, SPI, CS>
 where
     SPI: Transfer<u8, Error = E> + Write<u8, Error = E>,
-    CS: OutputPin
+    CS: OutputPin,
 {
     backend: Flash<SPI, CS>,
 }
@@ -343,19 +336,17 @@ where
 impl<E, SPI, CS> SpiFlashFs<E, SPI, CS>
 where
     SPI: Transfer<u8, Error = E> + Write<u8, Error = E>,
-    CS: OutputPin
+    CS: OutputPin,
 {
     pub fn new(storage: Flash<SPI, CS>) -> SpiFlashFs<E, SPI, CS> {
-        SpiFlashFs {
-            backend: storage
-        }
+        SpiFlashFs { backend: storage }
     }
 }
 
 #[cfg(feature = "littlefs-driver")]
 impl<E, CS> From<Error<E, CS>> for littlefs2::io::Error
 where
-    CS: OutputPin
+    CS: OutputPin,
 {
     #[allow(unused_variables)]
     fn from(err: Error<E, CS>) -> Self {
@@ -367,7 +358,7 @@ where
 impl<E, SPI, CS> littlefs2::driver::Storage for SpiFlashFs<E, SPI, CS>
 where
     SPI: Transfer<u8, Error = E> + Write<u8, Error = E>,
-    CS: OutputPin
+    CS: OutputPin,
 {
     const READ_SIZE: usize = 16;
     const WRITE_SIZE: usize = 16;
@@ -404,7 +395,6 @@ where
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -425,8 +415,12 @@ mod tests {
         // you need to set RUST_MIN_STACK to a really big number to get this
         // test to pass.
         // RUST_MIN_STACK=8704000000 worked last time.
-        use littlefs2::{fs::Filesystem, driver, io::{Error, Result}, consts};
         use littlefs2::ram_storage;
+        use littlefs2::{
+            consts, driver,
+            fs::Filesystem,
+            io::{Error, Result},
+        };
 
         println!("do I fail here?");
 
@@ -455,6 +449,5 @@ mod tests {
         Filesystem::format(&mut storage).unwrap();
         // must allocate state statically before use
         let mut fs = Filesystem::mount(&mut alloc, &mut storage).unwrap();
-
     }
 }
