@@ -324,6 +324,7 @@ impl<E, SPI: Transfer<u8, Error = E> + Write<u8, Error = E>, CS: OutputPin>
 }
 
 #[cfg(feature = "littlefs-driver")]
+#[derive(Debug)]
 pub struct SpiFlashFs<E, SPI, CS>
 where
     SPI: Transfer<u8, Error = E> + Write<u8, Error = E>,
